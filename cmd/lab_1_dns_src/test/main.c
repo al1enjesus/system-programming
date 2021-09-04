@@ -5,6 +5,7 @@
 #include <time.h>
 #include <string.h>
 #include "dns.h"
+#include "hashtable.h"
 
 typedef struct _DNS_ENTRY
 {
@@ -192,8 +193,8 @@ BOOL loadFromFile(const char* filename, PDNS_ENTRY* pDnsArray, unsigned int* siz
         unsigned int ip1 = 0, ip2 = 0, ip3 = 0, ip4 = 0;
 
         fgets(buffer, 200, fInput);
-
-        if ( 5 != fscanf_s(fInput, "%d.%d.%d.%d %s", &ip1, &ip2, &ip3, &ip4, buffer, 200) )
+        // changed fsacnf_s -> fscanf
+        if ( 5 != fscanf(fInput, "%d.%d.%d.%d %s", &ip1, &ip2, &ip3, &ip4, buffer, 200) )
             continue;
 
         (*pDnsArray)[i].ip = ( ip1 & 0xFF ) << 24 |
@@ -317,6 +318,5 @@ int main( int argc, char* argv[] )
             freeDnsEntries(&pDnsArray, size);
         }
     }
-
     return 0;
 }
