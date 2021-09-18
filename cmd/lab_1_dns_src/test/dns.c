@@ -8,25 +8,47 @@
 
 
 
+#include <stdio.h>
 #include "dns.h"
+#include "hashtable.h"
 
 DNSHandle InitDNS( )
 {
-    // IMPLEMENT ME =)
-		
-    return (DNSHandle)0;
+    HashTable *hashTable = HashTableInit();
+    return (DNSHandle) hashTable;
 }
 
 void LoadHostsFile( DNSHandle hDNS, const char* hostsFilePath )
 {
+    HashTable* hT = (HashTable*) hDNS;
+
+    FILE* fInput = NULL;
+    fInput = fopen(hostsFilePath, "r");
+    char buffer[256];
+    while((fgets(buffer, 256, fInput))!=NULL)
+    {
+        char ip[21], domain[100];
+        sscanf(buffer, "%s    %s", &ip, &domain);
+        HashTableInsert(hT, domain, ip);
+    }
     // IMPLEMENT ME =)
 }
 
 IPADDRESS DnsLookUp( DNSHandle hDNS, const char* hostName )
 {
+    HashTable* hT = (HashTable*) hDNS;
+    char * ip = HashTableSearch(hT, hostName);
+    unsigned int ip_int = 0;
+    int ip1, ip2, ip3, ip4;
+    char * buffer;
+    sscanf(ip, "%d.%d.%d.%d %s", &ip1, &ip2, &ip3, &ip4, &buffer);
+    ip_int = ( ip1 & 0xFF ) << 24 |
+                         ( ip2 & 0xFF ) << 16 |
+                         ( ip3 & 0xFF ) << 8  |
+                         ( ip4 & 0xFF ) ;
     // IMPLEMENT ME =)
-
-    return INVALID_IP_ADDRESS;
+    
+    return ip_int;
 }
 
 void ShutdownDNS( DNSHandle hDNS )
