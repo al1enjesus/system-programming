@@ -33,6 +33,7 @@ void LoadHostsFile( DNSHandle hDNS, const char* hostsFilePath )
         sscanf(buffer, "%s    %s", &ip, &domain);
         HashTableInsert(hT, domain, ip);
     }
+	fclose(fInput);
 }
 
 IPADDRESS DnsLookUp( DNSHandle hDNS, const char* hostName )

@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdint.h>
 
-#define HT_INITIAL_SIZE 15000
+#define HT_INITIAL_SIZE 100000
 #define PENGUINS_ARE_CUTE TRUE
 
 typedef struct Item
