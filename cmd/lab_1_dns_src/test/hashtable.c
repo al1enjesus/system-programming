@@ -84,13 +84,15 @@ HashTable *HashTableInit() {
 }
 
 char *HashTableSearch(HashTable *hashTable, char *key) {
-    uint32_t index = murmurhash(key, strlen(key), hashTable->seed) % hashTable->arraySize;
+    uint32_t key_length = strlen(key);
+
+    uint32_t index = murmurhash(key, key_length, hashTable->seed) % hashTable->arraySize;
     if (hashTable->array[index] == NULL) {
         return NULL;
     }
     Item *node = hashTable->array[index];
     while (node != NULL) {
-        if (node->key_size == strlen(key)) {
+        if (node->key_size == key_length) {
             if (!strcmp(key, node->key)) {
                 return node->value;
             }
@@ -101,7 +103,10 @@ char *HashTableSearch(HashTable *hashTable, char *key) {
 }
 
 void HashTableInsert(HashTable *hashTable, char *key, char *value) {
-    uint32_t index = murmurhash(key, strlen(key), hashTable->seed) % hashTable->arraySize;
+    uint32_t key_length = strlen(key);
+    uint32_t value_length = strlen(value);
+
+    uint32_t index = murmurhash(key, key_length, hashTable->seed) % hashTable->arraySize;
     Item *node, *last_node;
     node = hashTable->array[index];
     last_node = NULL;
@@ -116,11 +121,11 @@ void HashTableInsert(HashTable *hashTable, char *key, char *value) {
 
     Item *new_node;
     new_node = malloc(sizeof(Item));
-    new_node->key = malloc(strlen(key));
-    new_node->value = malloc(strlen(value));
+    new_node->key = malloc(key_length);
+    new_node->value = malloc(value_length);
     strcpy(new_node->key, key);
     strcpy(new_node->value, value);
-    new_node->key_size = strlen(key);
+    new_node->key_size = key_length;
     new_node->next = NULL;
 
     if (last_node != NULL) {
@@ -136,6 +141,9 @@ void HashTableRemove(HashTable *hashTable){
         Item *next_node = NULL;
         while (node != NULL){
             next_node = node->next;
+            free(node->key);
+            free(node->value);
+            free(node->next);
             free(node);
             node = next_node;
         }
