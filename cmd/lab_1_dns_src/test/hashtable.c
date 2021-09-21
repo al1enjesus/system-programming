@@ -3,29 +3,88 @@
 //
 
 #include <stdio.h>
+#include <stdint.h>
+#include <time.h>
 #include "hashtable.h"
 
-size_t getHash(const char *key, size_t keyLength, size_t hashTableSize) {
-    size_t sum = 0;
-    for (size_t i = 0; i < keyLength; i++) {
-        sum += (size_t) (key)[i] * (i + 1);
+
+uint32_t murmurhash (const char *key, uint32_t len, uint32_t seed) {
+    uint32_t c1 = 0xcc9e2d51;
+    uint32_t c2 = 0x1b873593;
+    uint32_t r1 = 15;
+    uint32_t r2 = 13;
+    uint32_t m = 5;
+    uint32_t n = 0xe6546b64;
+    uint32_t h = 0;
+    uint32_t k = 0;
+    uint8_t *d = (uint8_t *) key; // 32 bit extract from `key'
+    const uint32_t *chunks = NULL;
+    const uint8_t *tail = NULL; // tail - last 8 bytes
+    int i = 0;
+    int l = len / 4; // chunk length
+
+    h = seed;
+
+    chunks = (const uint32_t *) (d + l * 4); // body
+    tail = (const uint8_t *) (d + l * 4); // last 8 byte chunk of `key'
+
+    // for each 4 byte chunk of `key'
+    for (i = -l; i != 0; ++i) {
+        // next 4 byte chunk of `key'
+        k = chunks[i];
+
+        // encode next 4 byte chunk of `key'
+        k *= c1;
+        k = (k << r1) | (k >> (32 - r1));
+        k *= c2;
+
+        // append to hash
+        h ^= k;
+        h = (h << r2) | (h >> (32 - r2));
+        h = h * m + n;
     }
-    return sum % (hashTableSize);
+
+    k = 0;
+
+    // remainder
+    switch (len & 3) { // `len % 4'
+        case 3: k ^= (tail[2] << 16);
+        case 2: k ^= (tail[1] << 8);
+
+        case 1:
+            k ^= tail[0];
+            k *= c1;
+            k = (k << r1) | (k >> (32 - r1));
+            k *= c2;
+            h ^= k;
+    }
+
+    h ^= len;
+
+    h ^= (h >> 16);
+    h *= 0x85ebca6b;
+    h ^= (h >> 13);
+    h *= 0xc2b2ae35;
+    h ^= (h >> 16);
+
+    return h;
 }
 
 HashTable *HashTableInit() {
     HashTable *hashTable = (HashTable *) malloc(sizeof(HashTable));
     hashTable->arraySize = HT_INITIAL_SIZE;
+    hashTable->seed = time(NULL);
     hashTable->array = calloc(hashTable->arraySize, sizeof(**(hashTable->array)));
 
-    for (unsigned int i = 0; i < hashTable->arraySize; i++) {
+    for (uint32_t i = 0; i < hashTable->arraySize; i++) {
         hashTable->array[i] = NULL;
     }
+
     return hashTable;
 }
 
 char *HashTableSearch(HashTable *hashTable, char *key) {
-    size_t index = getHash(key, strlen(key), hashTable->arraySize);
+    uint32_t index = murmurhash(key, strlen(key), hashTable->seed) % hashTable->arraySize;
     if (hashTable->array[index] == NULL) {
         return NULL;
     }
@@ -38,19 +97,20 @@ char *HashTableSearch(HashTable *hashTable, char *key) {
         }
         node = node->next;
     }
-
     return NULL;
 }
 
 void HashTableInsert(HashTable *hashTable, char *key, char *value) {
-    size_t index = getHash(key, strlen(key), hashTable->arraySize);
+    uint32_t index = murmurhash(key, strlen(key), hashTable->seed) % hashTable->arraySize;
     Item *node, *last_node;
     node = hashTable->array[index];
     last_node = NULL;
 
     while (node != NULL) {
-        // todo: write overwriting if similar keys
         last_node = node;
+        if (!strcmp(last_node->key, key)){
+            break;
+        }
         node = node->next;
     }
 
@@ -68,4 +128,18 @@ void HashTableInsert(HashTable *hashTable, char *key, char *value) {
     } else {
         hashTable->array[index] = new_node;
     }
+}
+
+void HashTableRemove(HashTable *hashTable){
+    for (uint32_t index = 0; index < HT_INITIAL_SIZE; index ++ ){
+        Item *node = hashTable->array[index];
+        Item *next_node = NULL;
+        while (node != NULL){
+            next_node = node->next;
+            free(node);
+            node = next_node;
+        }
+        free(hashTable->array[index]);
+    }
+    free(hashTable);
 }
