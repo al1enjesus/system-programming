@@ -1,2 +1,5 @@
 project(lab_01)
-add_executable(lab_01 main.c dns.c hashtable.c hashtable.h dns.h)
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+add_executable(lab_01 main.c hashtable.c dns.c hashtable.h dns.h)

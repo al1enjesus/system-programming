@@ -237,7 +237,6 @@ void freeDnsEntries(PDNS_ENTRY* pDnsArray, unsigned int size)
 
 int main( int argc, char* argv[] )
 {
-
     PDNS_ENTRY pDnsArray  = NULL;
     unsigned int size = 0;
     DNSHandle hDnsEngine = INVALID_DNS_HANDLE;
