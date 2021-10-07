@@ -62,6 +62,7 @@ IN CASE OF INVALID MESSAGE THE STATE SHOULD BE RESET TO 1 (INIT)
 
 #include <string.h>
 #include <stdbool.h>
+#include <stdio.h>
 #include "splpv1.h"
 
 
@@ -84,104 +85,108 @@ IN CASE OF INVALID MESSAGE THE STATE SHOULD BE RESET TO 1 (INIT)
  *    state
  */
 
-int CurrentState = 1;
-char WhatCommand;
-
-const bool base64[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
-
-const bool data[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0 };
-
 const char* commands[] = { "GET_DATA", "GET_FILE", "GET_COMMAND" };
+char current_state = 1;
+char command_type;
 
 enum test_status validate_message(struct Message *msg) {
     char* message = msg->text_message;
     if (msg->direction == A_TO_B) {
-        if (CurrentState == 1 && !strcmp(message, "CONNECT")) {
-            CurrentState = 2;
+        if (current_state == 1 && !strcmp(message, "CONNECT")) {
+            current_state = 2;
             return MESSAGE_VALID;
         }
-        else if (CurrentState == 3) {
+        else if (current_state == 3) {
             if (!strcmp(message, "GET_VER")) {
-                CurrentState = 4;
+                current_state = 4;
                 return MESSAGE_VALID;
             }
             else if (!strcmp(message, "GET_DATA")) {
-                WhatCommand = 0;
-                CurrentState = 5;
+                command_type = 0;
+                current_state = 5;
                 return MESSAGE_VALID;
             }
             else if (!strcmp(message, "GET_FILE")) {
-                WhatCommand = 1;
-                CurrentState = 5;
+                command_type = 1;
+                current_state = 5;
                 return MESSAGE_VALID;
             }
             else if (!strcmp(message, "GET_COMMAND")) {
-                WhatCommand = 2;
-                CurrentState = 5;
+                command_type = 2;
+                current_state = 5;
                 return MESSAGE_VALID;
             }
             else if (!strcmp(message, "GET_B64")) {
-                CurrentState = 6;
+                current_state = 6;
                 return MESSAGE_VALID;
             }
             else if (!strcmp(message, "DISCONNECT")) {
-                CurrentState = 7;
+                current_state = 7;
                 return MESSAGE_VALID;
             }
         }
     }
     else {
-        if (CurrentState == 2 && !strcmp(message, "CONNECT_OK")) {
-            CurrentState = 3;
+        if (current_state == 2 && !strcmp(message, "CONNECT_OK")) {
+            current_state = 3;
             return MESSAGE_VALID;
         }
-        else if (CurrentState == 7 && !strcmp(message, "DISCONNECT_OK")) {
-            CurrentState = 1;
+        else if (current_state == 7 && !strcmp(message, "DISCONNECT_OK")) {
+            current_state = 1;
             return MESSAGE_VALID;
         }
-        else if (CurrentState == 4 && !strncmp(message, "VERSION ", 8)) {
+        else if (current_state == 4 && !strncmp(message, "VERSION ", 8)) {
             message += 8;
-            if (*message > 48 && *message < 58) {
-                for (++message; *message != '\0'; message++) {
-                    if (*message < 48 || *message > 57) {
-                        CurrentState = 1;
+            if (*message > '0' && *message < '9') {
+                for (++message; *message != '\0'; ++message) {
+                    if (*message < '0' || *message > '8') {
+                        current_state = 1;
                         return MESSAGE_INVALID;
                     }
                 }
-                CurrentState = 3;
+                current_state = 3;
                 return MESSAGE_VALID;
             }
         }
-        else if (CurrentState == 5) {
-            unsigned int l = strlen(commands[WhatCommand]);
-            if (!strncmp(message, commands[WhatCommand], l))
+        else if (current_state == 5) {
+            char len = strlen(commands[command_type]);
+            if (!strncmp(message, commands[command_type], len))
             {
-                message += l;
+                message += len;
                 if (*message == ' ')
                 {
                     message++;
-                    char* s;
-                    for (; data[*message + 128]; ++message);
-                    s = (*message == ' ') ? message + 1 : NULL;
-                    if (s && !strcmp(s, commands[WhatCommand])) {
-                        CurrentState = 3;
+                    while (
+                            (('0' <= *message) && (*message <= '9')) ||
+                            (('a' <= *message) && (*message <= 'z')) ||
+                            (*message == '.')
+                          ) message++;
+                    char *s = (*message == ' ') ? message + 1 : NULL;
+                    if (s && !strcmp(s, commands[command_type])) {
+                        current_state = 3;
                         return MESSAGE_VALID;
                     }
                 }
             }
         }
-        else if (CurrentState == 6 && !strncmp(message, "B64: ", 5)) {
+        else if (current_state == 6 && !strncmp(message, "B64: ", 5)) {
             message += 5;
             char* begin = message;
-            for (; base64[*message + 128]; ++message);
+            while (
+                    (('0' <= *message) && (*message <= '9')) ||
+                    (('a' <= *message) && (*message <= 'z')) ||
+                    (('A' <= *message) && (*message <= 'Z')) ||
+                    (*message == '+') || (*message == '/')
+                  ) message++;
             char check = 0;
             for (; (check < 2) && (message[check] == '='); ++check);
             if ((message - begin + check) % 4 == 0 && !message[check]) {
-                CurrentState = 3;
+                current_state = 3;
                 return MESSAGE_VALID;
             }
+
         }
     }
-    CurrentState = 1;
+    current_state = 1;
     return MESSAGE_INVALID;
 }

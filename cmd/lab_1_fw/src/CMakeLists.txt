@@ -6,6 +6,4 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-include_directories(.)
-
-add_executable(lab_1_fw main.c splpv1.c splpv1.h)
+add_executable(lab_1_fw splpv1.c main.c splpv1.h)
