@@ -301,7 +301,7 @@ unsigned int SplpGetMessageCount( FILE* fInput )
 {
     unsigned int result = 0;
     fseek( fInput, 0, SEEK_SET );
-    if ( 1 == fscanf_s( fInput, "%u", &result ) )
+    if ( 1 == fscanf( fInput, "%u", &result ) )
         return result;
     return 0;
 }
@@ -315,7 +315,7 @@ SPLP_STATUS SplpReadMessage(
 {
     int direction = 0, correct = 0;
 
-    if ( 2 == fscanf_s( fInput, "%d\t%d\t", &correct, &direction ) )
+    if ( 2 == fscanf( fInput, "%d\t%d\t", &correct, &direction ) )
     {
         char buffer[ 8192 ];
         pMsg->expectedTestStatus = ( correct == 1 ) ? MESSAGE_VALID : MESSAGE_INVALID;
@@ -371,9 +371,9 @@ SPLP_STATUS  SplpTestDataLoadFromFile(
     unsigned int fileSize = 0;
     SPLP_STATUS status = SPLP_STATUS_ERROR;
 
-
     if ( 0 == fopen_s( &fInput, fileName, "r" ) )
     {
+
         unsigned int msgCount = SplpGetMessageCount( fInput );
         PSPLP_TEST_MESSAGE testMessages;
 
